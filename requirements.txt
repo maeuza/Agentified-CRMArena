@@ -1,0 +1,16 @@
+# Base del template
+pydantic==2.8.2
+python-dotenv==1.0.1
+requests==2.32.3
+
+# Para conectar con Salesforce (Tu aporte)
+simple-salesforce==1.12.6
+zeep==4.2.1
+
+# Para bajar el examen de Hugging Face
+datasets
+huggingface-hub
+
+# Utilidades
+pandas==2.2.2
+tqdm==4.66.5
