@@ -24,4 +24,5 @@ EXPOSE 8000
 
 # 7. Comando para arrancar el agente
 # (Asegúrate de que 'src.main:app' coincida con tu archivo de entrada)
-CMD ["python", "-m", "src.main"]
+
+CMD ["python", "src/main.py"]

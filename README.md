@@ -1,87 +1,74 @@
-# A2A Agent Template
+CRMArena-Pro: Salesforce Agent Benchmark (A2A)
+This repository implements a high-performance Green Agent (Evaluator) for the AgentBeats competition, based on Salesforce's CRMArena benchmark. Its goal is to measure the reasoning and execution capabilities of LLM agents in complex, real-world CRM tasks. 
 
-A minimal template for building [A2A (Agent-to-Agent)](https://a2a-protocol.org/latest/) green agents compatible with the [AgentBeats](https://agentbeats.dev) platform.
+ Key Features
 
-## Project Structure
+Enterprise-Grade Evaluation: Secure connection to the Salesforce API to validate the real-time state of records. 
 
-```
-src/
-├─ server.py      # Server setup and agent card configuration
-├─ executor.py    # A2A request handling
-├─ agent.py       # Your agent implementation goes here
-└─ messenger.py   # A2A messaging utilities
-tests/
-└─ test_agent.py  # Agent tests
-Dockerfile        # Docker configuration
-pyproject.toml    # Python dependencies
-.github/
-└─ workflows/
-   └─ test-and-publish.yml # CI workflow
-```
 
-## Getting Started
+Integrated Dataset: Automated consumption of Salesforce/CRMArena from Hugging Face (1,170 test task partition). 
 
-1. **Create your repository** - Click "Use this template" to create your own repository from this template
 
-2. **Implement your agent** - Add your agent logic to [`src/agent.py`](src/agent.py)
+Dual A2A Architecture: The same container can act as a Judge (Green) or a Reference Participant (Purple) via environment variables. 
 
-3. **Configure your agent card** - Fill in your agent's metadata (name, skills, description) in [`src/server.py`](src/server.py)
 
-4. **Write your tests** - Add custom tests for your agent in [`tests/test_agent.py`](tests/test_agent.py)
+Detailed Reporting: Generates data artifacts including accuracy metrics (is_match) and task context data. 
 
-For a concrete example of implementing a green agent using this template, see this [draft PR](https://github.com/RDI-Foundation/green-agent-template/pull/3).
+Project Structure
 
-## Running Locally
+src/agent.py: Implementation of the Green Agent with evaluation and scoring logic. 
 
-```bash
-# Install dependencies
-uv sync
 
-# Run the server
-uv run src/server.py
-```
+src/participant.py: Purple Agent baseline demonstrating benchmark compatibility. 
 
-## Running with Docker
 
-```bash
+src/main.py: Unified entry point managing the agent's role based on the environment. 
+
+
+src/executor.py: A2A request handler following the protocol standards. 
+
+
+Dockerfile: Configuration for autonomous and reproducible execution. 
+
+Configuration & Requirements
+1. Environment Variables (.env)
+To enable Salesforce validation, configure the following credentials (do not commit to GitHub): 
+
+
+SALESFORCE_USERNAME: Trial Org username. 
+
+
+SALESFORCE_PASSWORD: User password. 
+
+
+SALESFORCE_SECURITY_TOKEN: API security token. 
+
+2. Role Selection (AgentBeats)
+Set the AGENT_ROLE variable in the platform to determine the container's function: 
+
+
+green: Activates Evaluator mode (Judge). 
+
+
+purple: Activates Participant mode (Reference student). 
+
+📦 Local Execution
+Build and run the container to verify system health: 
+
+Bash
 # Build the image
-docker build -t my-agent .
+docker build -t crm-arena-agent .
 
-# Run the container
-docker run -p 9009:9009 my-agent
-```
+# Run as Evaluator (Port 8000)
+docker run -p 8000:8000 --env-file .env -e AGENT_ROLE=green crm-arena-agent
+📊 Scoring Methodology
+The evaluation captures multiple performance dimensions: 
 
-## Testing
 
-Run A2A conformance tests against your agent.
+Binary Accuracy: Strict comparison between the agent's response and the dataset's ground_truth. 
 
-```bash
-# Install test dependencies
-uv sync --extra test
 
-# Start your agent (uv or docker; see above)
+Task Metadata: Logging of persona and query types for nuanced analysis. 
 
-# Run tests against your running agent URL
-uv run pytest --agent-url http://localhost:9009
-```
 
-## Publishing
-
-The repository includes a GitHub Actions workflow that automatically builds, tests, and publishes a Docker image of your agent to GitHub Container Registry.
-
-If your agent needs API keys or other secrets, add them in Settings → Secrets and variables → Actions → Repository secrets. They'll be available as environment variables during CI tests.
-
-- **Push to `main`** → publishes `latest` tag:
-```
-ghcr.io/<your-username>/<your-repo-name>:latest
-```
-
-- **Create a git tag** (e.g. `git tag v1.0.0 && git push origin v1.0.0`) → publishes version tags:
-```
-ghcr.io/<your-username>/<your-repo-name>:1.0.0
-ghcr.io/<your-username>/<your-repo-name>:1
-```
-
-Once the workflow completes, find your Docker image in the Packages section (right sidebar of your repository). Configure the package visibility in package settings.
-
-> **Note:** Organization repositories may need package write permissions enabled manually (Settings → Actions → General). Version tags must follow [semantic versioning](https://semver.org/) (e.g., `v1.0.0`).
+Robustness: Error handling for API communication and data schema validation.
