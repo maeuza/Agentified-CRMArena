@@ -1,6 +1,6 @@
 # CRMArena: Reliable Salesforce Agent Benchmark (A2A)
 
-This repository implements a high-performance **Green Agent (Evaluator)** and a **Purple Agent (Participant)** for the AgentBeats competition, based on the CRMArena benchmark. It is optimized for **reliability and speed** by using a local data infrastructure.
+This repository implements a **Green Agent (Evaluator)** and a **Purple Agent (Participant)** for the AgentBeats competition, based on the CRMArena benchmark. It is optimized for **reliability and speed** by using a local data infrastructure.
 
 ## 🌟 Key Features
 
