@@ -3,24 +3,27 @@ import uvicorn
 from a2a.server.app import AgentServer
 from agent import Agent          
 from participant import Participant
+
 def main():
-    # Leemos la variable de entorno que configuraremos en AgentBeats
-    # Si no hay variable, por defecto será el evaluador (green)
+    # Read the environment variable to be configured in AgentBeats
+    # Defaults to 'green' (evaluator) if the variable is not found
     role = os.getenv("AGENT_ROLE", "green").lower()
     
-    print(f"--- Iniciando Agente en modo: {role.upper()} ---")
+    print(f"--- Starting Agent in {role.upper()} mode ---")
 
     if role == "green":
-        # Arranca la lógica de evaluación que ya programamos
+        # Launch the evaluation logic (Green Agent)
         agent_instance = Agent()
     else:
-        # Arranca la lógica del participante de referencia
+        # Launch the reference participant logic (Purple Agent)
         agent_instance = Participant()
 
-    # Creamos el servidor web compatible con el protocolo A2A
+    # Create the web server compatible with the A2A protocol
     server = AgentServer(agent_instance)
     
-    # Ejecutamos el servidor en el puerto 8000
+    # Run the server on port 8000
+    # Note: Ensure this port matches your Dockerfile EXPOSE command
+    print(f"Serving A2A Agent on port 8000...")
     uvicorn.run(server.app, host="0.0.0.0", port=8000)
 
 if __name__ == "__main__":

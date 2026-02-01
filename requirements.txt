@@ -1,13 +1,17 @@
+# Protocolo base de AgentBeats
+a2a-protocol
+
+# Framework web y servidor
 pydantic>=2.0.0
 python-dotenv
-requests
 httpx
 uvicorn
 fastapi
+
+# Datos y Salesforce
 datasets
 huggingface-hub
 simple-salesforce
+pandas
 zeep
 tqdm
-# Usamos una versión de pandas que no dé guerra en Windows
-pandas

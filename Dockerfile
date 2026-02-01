@@ -1,28 +1,29 @@
-# 1. Usamos una imagen de Python ligera
+# 1. Use a lightweight Python base image
 FROM python:3.10-slim
 
-# 2. Evitamos que Python genere archivos .pyc y forzamos logs en tiempo real
+# 2. Prevent Python from writing .pyc files and force real-time logging
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
+# Set the working directory inside the container
 WORKDIR /app
 
-# 3. Instalamos dependencias del sistema necesarias para algunas librerías
+# 3. Install system dependencies required for some Python libraries
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# 4. Copiamos e instalamos las librerías de Python
+# 4. Copy and install Python dependencies
+# Make sure you have a requirements.txt file in your root folder
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 5. Copiamos el resto del código
+# 5. Copy the rest of the application code
 COPY . .
 
-# 6. Exponemos el puerto que usa el template (normalmente 8000)
+# 6. Expose the port used by the agent (A2A standard is often 8000)
 EXPOSE 8000
 
-# 7. Comando para arrancar el agente
-# (Asegúrate de que 'src.main:app' coincida con tu archivo de entrada)
-
+# 7. Command to start the agent
+# This points to our dual-role entry point
 CMD ["python", "src/main.py"]

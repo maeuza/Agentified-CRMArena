@@ -4,18 +4,21 @@ from datasets import load_dataset
 
 class Participant:
     def __init__(self):
-        print("Cargando dataset de referencia para el Agente Púrpura...")
+        # Console log in English
+        print("Loading reference dataset for Purple Agent...")
         self.dataset = load_dataset("Salesforce/CRMArena", "CRMArena", split="test")
 
     async def run(self, message: Message, updater=None) -> Message:
         query = get_message_text(message)
         
-        # El estudiante busca la respuesta correcta para demostrar que el Verde califica bien
+        # The student looks for the correct answer to demonstrate 
+        # that the Green Agent (Evaluator) scores correctly.
         match = next((item for item in self.dataset if item["query"] == query), None)
         
         if match:
-            respuesta = str(match["ground_truth"])
+            response = str(match["ground_truth"])
         else:
-            respuesta = "Lo siento, no encontré información en Salesforce para esa consulta."
+            # Response in English
+            response = "I am sorry, I could not find information in Salesforce for that query."
             
-        return new_agent_text_message(respuesta)
+        return new_agent_text_message(response)
