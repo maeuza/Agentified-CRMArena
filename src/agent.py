@@ -1,5 +1,4 @@
 import os
-import asyncio
 from datasets import load_dataset
 from a2a.utils import get_message_text, new_agent_text_message
 from a2a.types import Message, Part, DataPart
@@ -11,13 +10,12 @@ class Agent:
         self.dataset = None  # lazy load
 
     async def run(self, message: Message, updater):
-        # 🔑 SSE handshake inmediato
+        # SSE handshake inmediato
         await updater.start_work()
         await updater.add_artifact(
             parts=[Part(root=DataPart(data={"status": "started"}))]
         )
 
-        # 🔑 Cargar dataset DESPUÉS de SSE ready
         if self.dataset is None:
             self.dataset = load_dataset(
                 "Salesforce/CRMArena", "CRMArena", split="test"
@@ -50,7 +48,7 @@ class Agent:
                 "agent_answer": answer_text,
                 "correct_answer": ground_truth,
                 "status": "Success" if is_correct else "Failed"
-            }))]
+            })))]
         )
 
         await updater.complete()
