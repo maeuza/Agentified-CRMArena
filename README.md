@@ -1,68 +1,49 @@
-CRMArena-Pro: Salesforce Agent Benchmark (A2A)
-This repository implements a high-performance Green Agent (Evaluator) for the AgentBeats competition, based on Salesforce's CRMArena benchmark. Its goal is to measure the reasoning and execution capabilities of LLM agents in complex, real-world CRM tasks. 
+# CRMArena: Reliable Salesforce Agent Benchmark (A2A)
 
- Key Features
+This repository implements a high-performance **Green Agent (Evaluator)** and a **Purple Agent (Participant)** for the AgentBeats competition, based on the CRMArena benchmark. It is optimized for **reliability and speed** by using a local data infrastructure.
 
-Enterprise-Grade Evaluation: Secure connection to the Salesforce API to validate the real-time state of records. 
+## 🌟 Key Features
 
-
-Integrated Dataset: Automated consumption of Salesforce/CRMArena from Hugging Face (1,170 test task partition). 
-
-
-Dual A2A Architecture: The same container can act as a Judge (Green) or a Reference Participant (Purple) via environment variables. 
+* **Reliable Evaluation (Offline-First):** Uses a local SQLite database (`crmarena_data.db`) to validate records, ensuring 100% uptime and bypassing external API rate limits or connectivity issues.
+* **Integrated Dataset:** Automated consumption of the `Salesforce/CRMArena` dataset from Hugging Face (test partition).
+* **Advanced Tool Use:** The participant is equipped with SOQL-compatible tools to query the local CRM mock, demonstrating real-world data handling.
+* **Dual A2A Architecture:** A single container handles both **Judge (Green)** and **Participant (Purple)** roles via environment variables.
 
 
-Detailed Reporting: Generates data artifacts including accuracy metrics (is_match) and task context data. 
 
-Project Structure
+## 📂 Project Structure
 
-src/agent.py: Implementation of the Green Agent with evaluation and scoring logic. 
+* `src/agent.py`: The **Green Agent** logic. It pulls tasks from HuggingFace and scores the participant.
+* `src/participant.py`: The **Purple Agent** logic. Powered by Gemini 1.5 Flash and LangChain.
+* `src/functions.py`: Toolset for SQLite/SOQL querying and CRM logic (AHT calculation, workload analysis).
+* `src/local_data/`: Directory containing the `crmarena_data.db` SQLite file.
+* `src/main.py`: Unified entry point using `AGENT_ROLE` to switch modes.
 
+## ⚙️ Configuration & Requirements
 
-src/participant.py: Purple Agent baseline demonstrating benchmark compatibility. 
+### 1. Environment Variables
+Configure these in your **AgentBeats/GitHub Secrets**:
+* `GOOGLE_API_KEY`: Required for the Gemini model.
+* `AGENT_ROLE`: Set to `green` for the Evaluator or `purple` for the Participant.
 
+### 2. Dependencies
+Main libraries used:
+* `langchain-google-genai`
+* `a2a-protocol`
+* `python-dateutil`
+* `sqlite3`
+* `pandas`
 
-src/main.py: Unified entry point managing the agent's role based on the environment. 
+## 📦 Local Execution
 
-
-src/executor.py: A2A request handler following the protocol standards. 
-
-
-Dockerfile: Configuration for autonomous and reproducible execution. 
-
-Configuration & Requirements
-1. Environment Variables (.env)
-To enable Salesforce validation, configure the following credentials (do not commit to GitHub): 
-
-
-SALESFORCE_USERNAME: Trial Org username. 
-
-
-SALESFORCE_PASSWORD: User password. 
-
-
-SALESFORCE_SECURITY_TOKEN: API security token. 
-
-2. Role Selection (AgentBeats)
-Set the AGENT_ROLE variable in the platform to determine the container's function: 
+Verify the system health locally using Docker:
 
 
-green: Activates Evaluator mode (Judge). 
-
-
-purple: Activates Participant mode (Reference student). 
-
-📦 Local Execution
-Build and run the container to verify system health: 
-
-Bash
 # Build the image
-docker build -t crm-arena-agent .
+docker build -t crm-arena-pro .
 
-# Run as Evaluator (Port 8000)
-docker run -p 8000:8000 --env-file .env -e AGENT_ROLE=green crm-arena-agent
-📊 Scoring Methodology
-The evaluation captures multiple performance dimensions: 
+# Run as Participant (Reference Agent)
+docker run -p 8000:8000 -e GOOGLE_API_KEY="your_key" -e AGENT_ROLE=purple crm-arena-pro
 
 
 Binary Accuracy: Strict comparison between the agent's response and the dataset's ground_truth. 
