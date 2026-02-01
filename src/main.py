@@ -5,26 +5,34 @@ from agent import Agent
 from participant import Participant
 
 def main():
-    # Read the environment variable to be configured in AgentBeats
-    # Defaults to 'green' (evaluator) if the variable is not found
-    role = os.getenv("AGENT_ROLE", "green").lower()
+    """
+    Entry point for the AgentBeats platform. 
+    Determines if the instance should act as a Judge (Green) or a Worker (Purple).
+    """
+    # Role assigned by AgentBeats environment variables
+    role = os.getenv("AGENT_ROLE", "purple").lower()
     
-    print(f"--- Starting Agent in {role.upper()} mode ---")
+    print(f"--- Starting CRMArena Node ---")
+    print(f"Active Role: {role.upper()}")
 
+    # Initialize the corresponding logic
     if role == "green":
-        # Launch the evaluation logic (Green Agent)
         agent_instance = Agent()
     else:
-        # Launch the reference participant logic (Purple Agent)
         agent_instance = Participant()
 
-    # Create the web server compatible with the A2A protocol
+    # Create the A2A-compliant server
     server = AgentServer(agent_instance)
     
-    # Run the server on port 8000
-    # Note: Ensure this port matches your Dockerfile EXPOSE command
-    print(f"Serving A2A Agent on port 8000...")
-    uvicorn.run(server.app, host="0.0.0.0", port=8000)
+    # Standard configuration for AgentBeats container deployment
+    print(f"Deployment Status: Online on port 8000")
+    
+    uvicorn.run(
+        server.app, 
+        host="0.0.0.0", 
+        port=8000, 
+        log_level="info"
+    )
 
 if __name__ == "__main__":
     main()

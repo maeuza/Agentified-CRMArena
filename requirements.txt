@@ -1,17 +1,22 @@
-# Protocolo base de AgentBeats
+# --- Core AgentBeats & Server ---
 a2a-protocol
-
-# Framework web y servidor
 pydantic>=2.0.0
 python-dotenv
 httpx
 uvicorn
 fastapi
 
-# Datos y Salesforce
+# --- AI & Brain (Gemini) ---
+langchain-google-genai
+langchain-core
+
+# --- Data & Benchmark Processing ---
 datasets
 huggingface-hub
-simple-salesforce
 pandas
+python-dateutil
+
+# --- Salesforce Compatibility (Legacy/Mock) ---
+simple-salesforce
 zeep
 tqdm
