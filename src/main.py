@@ -1,5 +1,6 @@
 import os
 import uvicorn
+from fastapi.responses import FileResponse  # <--- NUEVA: Para enviar el archivo JSON
 from a2a.server.app import AgentServer
 from agent import Agent          
 from participant import Participant
@@ -23,6 +24,13 @@ def main():
 
     # Create the A2A-compliant server
     server = AgentServer(agent_instance)
+
+    # --- BLOQUE NUEVO PARA EL LEADERBOARD ---
+    @server.app.get("/agent-card.json")
+    async def get_agent_card():
+        # Esto busca el archivo en la raíz del contenedor
+        return FileResponse("agent-card.json")
+    # ----------------------------------------
     
     # Standard configuration for AgentBeats container deployment
     print(f"Deployment Status: Online on port 8000")

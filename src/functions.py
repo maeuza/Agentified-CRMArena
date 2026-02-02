@@ -1,92 +1,69 @@
 import sqlite3
 import os
-from collections import defaultdict
 from datetime import datetime
-from dateutil.relativedelta import relativedelta
 
-def issue_soql_query(query, sf_connector=None):
+# Configuración de la ruta: Asegura que funcione en local y en el contenedor
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "local_data", "crmarena_data.db")
+
+def issue_soql_query(query: str):
     """
-    Executes a query against the local SQLite database instead of Salesforce Cloud.
-    Maintains compatibility with the CRMArena benchmark logic.
+    Ejecuta una consulta SQL/SOQL en la base de datos local de CRM Arena.
+    Úsala para buscar registros de Case, Account, Contact, User o Knowledge.
     """
     try:
-        # Construct path to the database within the container structure
-        db_path = os.path.join("src", "local_data", "crmarena_data.db")
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row  # Permite acceder por nombre de columna
+        cursor = conn.cursor()
         
-        conn = sqlite3.connect(db_path)
+        # Limpieza básica de SOQL para SQLite
+        # (Ej: SOQL usa 'LIMIT 10', SQLite también, pero SOQL es case-insensitive)
+        cursor.execute(query)
+        rows = cursor.fetchall()
+        conn.close()
+        
+        return [dict(row) for row in rows]
+    except Exception as e:
+        return f"Error en la base de datos local: {str(e)}. Verifica que los nombres de tablas y campos sean correctos."
+
+def calculate_average_handle_time(case_ids: list):
+    """
+    Calcula el tiempo promedio de resolución (AHT) en minutos para una lista de IDs de casos.
+    Indispensable para tareas de rol 'Manager' o 'Analista'.
+    """
+    if not case_ids:
+        return 0.0
+    
+    try:
+        conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
-        # Execute query. Note: SQLite is compatible with basic SOQL syntax
-        cursor.execute(query)
-        result = [dict(row) for row in cursor.fetchall()]
-        conn.close()
-        return result
-    except Exception as e:
-        return f"Local DB Error: {str(e)}"
-
-def get_agents_with_max_cases(subset_cases, sf_connector=None):
-    """
-    Analyzes a subset of cases to find agents with the highest workload.
-    """
-    try:
-        if not isinstance(subset_cases, list):
-            return "Error: Input 'subset_cases' must be a list"
-
-        agent_issue_counts = defaultdict(int)
-        for record in subset_cases:
-            owner_id = record.get('OwnerId')
-            if owner_id:
-                agent_issue_counts[owner_id] += 1
+        # Preparamos la consulta con placeholders para evitar inyección
+        placeholders = ', '.join(['?'] * len(case_ids))
+        query = f"SELECT CreatedDate, ClosedDate FROM Case WHERE Id IN ({placeholders})"
         
-        if not agent_issue_counts:
-            return []
-
-        max_cases = max(agent_issue_counts.values())
-        return [agent_id for agent_id, count in agent_issue_counts.items() if count == max_cases]
-    except Exception as e:
-        return f"Error: {str(e)}"
-
-def calculate_average_handle_time(subset_cases, sf_connector=None):
-    """
-    Calculates the AHT (Average Handle Time) in minutes for a subset of closed cases.
-    """
-    try:
-        if not subset_cases:
-            return 0.0
-
-        total_time = 0
+        cursor.execute(query, case_ids)
+        rows = cursor.fetchall()
+        conn.close()
+        
+        total_minutes = 0
         count = 0
-        for case in subset_cases:
-            created = case.get('CreatedDate')
-            closed = case.get('ClosedDate')
-            if created and closed:
-                # Assuming standard ISO format from SQLite strings
-                fmt = "%Y-%m-%dT%H:%M:%S.%f%z"
+        
+        for row in rows:
+            if row['CreatedDate'] and row['ClosedDate']:
                 try:
-                    start = datetime.strptime(created, fmt)
-                    end = datetime.strptime(closed, fmt)
-                    total_time += (end - start).total_seconds() / 60
+                    # CRM Arena usa formato ISO '2024-01-01T12:00:00Z'
+                    # Reemplazamos Z por +00:00 para que Python lo entienda
+                    start = datetime.fromisoformat(row['CreatedDate'].replace('Z', '+00:00'))
+                    end = datetime.fromisoformat(row['ClosedDate'].replace('Z', '+00:00'))
+                    
+                    diff = (end - start).total_seconds() / 60
+                    total_minutes += diff
                     count += 1
-                except:
+                except ValueError:
                     continue
         
-        return total_time / count if count > 0 else 0.0
+        return total_minutes / count if count > 0 else 0.0
     except Exception as e:
-        return f"Error calculating AHT: {str(e)}"
-
-# Meta-information for tool-calling agents
-issue_soql_query.__info__ = {
-    "type": "function",
-    "function": {
-        "name": "issue_soql_query",
-        "description": "Executes a query to retrieve data from the local Salesforce-mock database.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "query": {"type": "string", "description": "The SQL/SOQL query string."}
-            },
-            "required": ["query"]
-        }
-    }
-}
+        return f"Error calculando AHT: {str(e)}"

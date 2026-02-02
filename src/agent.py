@@ -7,48 +7,63 @@ from messenger import Messenger
 class Agent:
     def __init__(self):
         self.messenger = Messenger()
-        self.dataset = None  # lazy load
+        self.dataset = None  
 
     async def run(self, message: Message, updater):
-        # SSE handshake inmediato
+        # 1. Handshake inicial (Obligatorio para AgentBeats)
         await updater.start_work()
-        await updater.add_artifact(
-            parts=[Part(root=DataPart(data={"status": "started"}))]
-        )
-
+        
+        # 2. Carga segura del dataset
         if self.dataset is None:
-            self.dataset = load_dataset(
-                "Salesforce/CRMArena", "CRMArena", split="test"
-            )
+            try:
+                print("--- Cargando dataset de CRMArena ---")
+                # Cargamos solo la partición 'test'
+                self.dataset = load_dataset(
+                    "Salesforce/CRMArena", "Salesforce-CRMArena", split="test", trust_remote_code=True
+                )
+            except Exception as e:
+                error_msg = f"Error crítico cargando dataset: {e}"
+                await updater.failed(new_agent_text_message(error_msg))
+                return
 
-        task_id = 0
+        # 3. Selección de la tarea
+        # Por defecto tomamos la primera tarea del benchmark
+        task_id = 0 
         current_task = self.dataset[task_id]
         question = current_task["query"]
         ground_truth = str(current_task["ground_truth"]).strip().lower()
 
-        await updater.add_artifact(
-            parts=[Part(root=DataPart(data={"status": "querying participant"}))]
-        )
-
+        # 4. Comunicación con el Participante (Purple Agent)
         participant_url = os.getenv("PARTICIPANT_URL")
+        if not participant_url:
+            await updater.failed(new_agent_text_message("Error: PARTICIPANT_URL no configurada"))
+            return
+
+        print(f"Enviando pregunta al participante: {question}")
         msg_to_send = new_agent_text_message(question)
 
-        purple_response = await self.messenger.talk_to_agent(
-            msg_to_send, participant_url
-        )
+        try:
+            purple_response = await self.messenger.talk_to_agent(
+                msg_to_send, participant_url
+            )
+            answer_text = get_message_text(purple_response).strip().lower()
+            
+            # 5. Evaluación (Lógica de scoring)
+            # Verificamos si la respuesta correcta está contenida en la respuesta del agente
+            is_correct = ground_truth in answer_text
+            score = 1.0 if is_correct else 0.0
 
-        answer_text = get_message_text(purple_response).strip().lower()
-        is_correct = ground_truth in answer_text
-        score = 1.0 if is_correct else 0.0
-
-        await updater.add_artifact(
-            parts=[Part(root=DataPart(data={
-                "score": score,
-                "question": question,
-                "agent_answer": answer_text,
-                "correct_answer": ground_truth,
-                "status": "Success" if is_correct else "Failed"
-            })))]
-        )
-
-        await updater.complete()
+            # 6. Reporte de resultados al Leaderboard
+            await updater.add_artifact(
+                parts=[Part(root=DataPart(data={
+                    "score": score,
+                    "question": question,
+                    "expected": ground_truth,
+                    "received": answer_text
+                }))]
+            )
+            await updater.complete()
+            
+        except Exception as e:
+            print(f"Fallo en la comunicación: {e}")
+            await updater.failed(new_agent_text_message(f"Error de evaluación: {e}"))
