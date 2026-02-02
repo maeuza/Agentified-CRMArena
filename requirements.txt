@@ -1,22 +1,19 @@
-# --- Core AgentBeats & Server ---
-a2a-protocol
+# --- Core AgentBeats (A2A) ---
+a2a-sdk[http-server]>=0.3.20
+uvicorn>=0.23.0
+fastapi>=0.100.0
+httpx>=0.24.0
+python-dotenv>=1.0.0
+
+# --- Inteligencia (Gemini & LangChain) ---
+langchain-google-genai>=1.0.0
+langchain-core>=0.1.0
+
+# --- Datos y Benchmark (CRM Arena) ---
+datasets>=2.14.0
+pandas>=2.0.0
+python-dateutil>=2.8.2
+
+# --- Utilidades ---
 pydantic>=2.0.0
-python-dotenv
-httpx
-uvicorn
-fastapi
-
-# --- AI & Brain (Gemini) ---
-langchain-google-genai
-langchain-core
-
-# --- Data & Benchmark Processing ---
-datasets
-huggingface-hub
-pandas
-python-dateutil
-
-# --- Salesforce Compatibility (Legacy/Mock) ---
-simple-salesforce
-zeep
-tqdm
+tomli>=2.0.0

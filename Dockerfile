@@ -1,29 +1,29 @@
-# 1. Use a lightweight Python base image
-FROM python:3.10-slim
+# Usamos 3.11-slim para que sea ligero pero compatible
+FROM python:3.11-slim
 
-# 2. Prevent Python from writing .pyc files and force real-time logging
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# 3. Install system dependencies required for some Python libraries
+# Instalamos dependencias de sistema necesarias para compilar algunas librerías de datos
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# 4. Copy and install Python dependencies
-# Make sure you have a requirements.txt file in your root folder
+# Instalamos las librerías del requirements.txt
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -U pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# 5. Copy the rest of the application code
+# Copiamos todo el código (incluyendo src/ y local_data/)
 COPY . .
 
-# 6. Expose the port used by the agent (A2A standard is often 8000)
+# Creamos el script de arranque obligatorio
+RUN echo "#!/bin/bash\npython src/main.py" > /app/run.sh && \
+    chmod +x /app/run.sh
+
 EXPOSE 8000
 
-# 7. Command to start the agent
-# This points to our dual-role entry point
-CMD ["python", "src/main.py"]
+# AgentBeats a veces busca el run.sh
+CMD ["/app/run.sh"]
