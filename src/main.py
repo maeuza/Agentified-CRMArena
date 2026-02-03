@@ -1,7 +1,8 @@
 import os
 import uvicorn
 from fastapi.responses import FileResponse  # <--- NUEVA: Para enviar el archivo JSON
-from a2a.server.app import AgentServer
+#from a2a.server.app import AgentServer
+from a2a import AgentServer
 from agent import Agent          
 from participant import Participant
 
