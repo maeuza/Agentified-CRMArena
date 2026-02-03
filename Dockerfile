@@ -2,8 +2,7 @@ FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-# NUEVO: Forzamos a Python a reconocer la carpeta raíz y src para los módulos
-ENV PYTHONPATH="/app:/app/src"
+ENV PYTHONPATH="."
 
 WORKDIR /app
 
@@ -12,15 +11,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-# Actualizamos pip e instalamos TODO
+
+# Instalación base y FORZAMOS el extra del servidor
 RUN pip install --no-cache-dir -U pip && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir "a2a-sdk[http-server]"
 
 COPY . .
 
-# Verificación de seguridad: Crea el script asegurando que use python3
-RUN echo "#!/bin/bash\npython3 src/main.py" > /app/run.sh && \
-    chmod +x /app/run.sh
+# Verificación de la ruta completa
+RUN python3 -c "import a2a.server.app; from a2a.server.app import AgentServer; print('✅ SDK y Servidor encontrados')"
 
 EXPOSE 8000
-CMD ["/app/run.sh"]
+CMD ["python3", "src/main.py"]
