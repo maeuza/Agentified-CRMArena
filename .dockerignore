@@ -1,0 +1,17 @@
+# SÍ o SÍ ignorar esto para evitar el error de importación
+env/
+venv/
+.venv/
+**/env/
+__pycache__/
+*.pyc
+
+# Ignorar basura de sistema y git (esto ahorra mucho espacio)
+.git/
+.gitignore
+.vscode/
+.env
+
+# NO ignoramos local_data porque contiene las DBs para la prueba
+# Pero si tienes archivos de logs o temporales ahí, podrías ser específico:
+# !src/local_data/*.db  <-- Esto es una forma de decir "No ignores los .db"
