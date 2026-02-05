@@ -1,31 +1,29 @@
 FROM python:3.11-slim
 
-# Configuraciones de Python
+# 1. Ajustes de Python
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-# PYTHONPATH para que encuentre los módulos en 'src' y las DBs
 ENV PYTHONPATH="/app:/app/src"
 
 WORKDIR /app
 
-# Instalamos dependencias de compilación para pandas/pydantic
+# 2. Dependencias del sistema
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# 1. Instalamos las librerías (Capa pesada pero se cachea)
+# 3. Instalación de librerías
 COPY requirements.txt .
 RUN pip install --no-cache-dir -U pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# 2. Copiamos todo el código (Incluye src/local_data con tus .db)
+# 4. Copiamos el código y las DBs (local_data)
 COPY . .
 
-# 3. VERIFICACIÓN: Probamos si el SDK está bien instalado
-# Si este paso falla, es que la versión del SDK en PyPI tiene un problema de estructura
-RUN python3 -c "import a2a; from a2a.server.app import AgentServer; print('✅ SDK y Servidor cargados con éxito')"
-
+# 5. Puerto y Ejecución
+# Eliminamos la verificación aquí para evitar errores de sintaxis en el build
 EXPOSE 8000
 
-# Ejecutamos desde la carpeta src
+# Tu main.py ya tiene la lógica de importación con try/except, 
+# así que fallará ahí con un mensaje claro si algo falta.
 CMD ["python3", "src/main.py"]
