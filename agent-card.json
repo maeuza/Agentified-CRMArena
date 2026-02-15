@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Agente especializado en Salesforce CRM basado en el benchmark CRM Arena.",
   "author": "maeuza",
-  "url": "http://green-agent:8000",
+  "url": "http://green-agent:8000/a2a-delivery",
   "capabilities": {
     "can_receive_messages": true,
     "can_send_messages": true
