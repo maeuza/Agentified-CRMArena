@@ -1,32 +1,29 @@
 import os
 import uvicorn
-import json
 from starlette.applications import Starlette
 from starlette.responses import JSONResponse, FileResponse
 from starlette.routing import Route
 from executor import Executor
 
-# Mock mejorado para cumplir con RequestContext y EventQueue
+# Mock Robusto para RequestContext y EventQueue
 class UnifiedMock:
     def __init__(self, text):
-        # Para context.message y context.current_task
         self.message = text
         self.content = text
-        self.task_id = "task-123"
         self.id = "task-123"
+        self.task_id = "task-123"
         self.agent_role = "purple"
         self.current_task = self 
         self.status = self
         self.state = "RUNNING"
         self.context_id = "ctx-default"
 
-    # Métodos requeridos por el Executor y TaskUpdater (EventQueue)
     async def enqueue_event(self, *args, **kwargs): pass
     async def send_message(self, *args, **kwargs): pass
     async def start_work(self): pass
     async def complete(self): pass
     async def failed(self, err): pass
-    async def put(self, event): pass # Requerido por algunos flujos de EventQueue
+    async def put(self, event): pass 
 
 executor_instance = Executor()
 
@@ -39,17 +36,15 @@ async def get_agent_card(request):
 async def delivery(request):
     try:
         data = await request.json()
-        # Manejo de JSON-RPC 2.0: la tarea suele venir en params['task']
         params = data.get("params", {})
+        # Extraemos el texto de la tarea
         task_text = params.get("task", data.get("task", "Listar casos"))
         req_id = data.get("id")
         
-        print(f"🤖 Recibido en Root/Delivery: {task_text}")
+        print(f"🤖 Recibido: {task_text}")
         
-        # Creamos el objeto que simula tanto el contexto como la cola de eventos
         unified_obj = UnifiedMock(task_text)
-        
-        # Llamamos al executor
+        # Ejecución
         result = await executor_instance.execute(unified_obj, unified_obj)
         
         return JSONResponse({
@@ -63,7 +58,7 @@ async def delivery(request):
             "jsonrpc": "2.0", 
             "error": {"code": -32603, "message": str(e)}, 
             "id": None
-        }, status_code=200) # Importante: JSON-RPC responde 200 aunque haya error de app
+        })
 
 routes = [
     Route("/agent-card.json", get_agent_card, methods=["GET"]),

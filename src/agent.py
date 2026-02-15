@@ -6,11 +6,14 @@ class Agent:
         self.participant = Participant()
 
     async def run(self, message, updater):
+        # Aseguramos que message sea un string puro
+        text_input = get_message_text(message) if not isinstance(message, str) else message
+        
         await updater.start_work()
         try:
-            # Enviamos el mensaje al participante y retornamos el texto puro
-            response_text = await self.participant.run(message)
-            await updater.complete()
+            # Enviamos el texto al participante (Salesforce logic)
+            response_text = await self.participant.run(text_input)
+            # NO llamamos a complete() aquí, dejamos que Executor lo maneje
             return str(response_text)
         except Exception as e:
             await updater.failed(f"Fallo: {str(e)}")
