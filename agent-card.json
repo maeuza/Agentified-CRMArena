@@ -12,12 +12,16 @@
   "defaultOutputModes": ["text"],
   "skills": [
     {
+      "id": "skill-soql",
       "name": "SOQL_Querying",
-      "description": "Capacidad para consultar bases de datos Salesforce usando SOQL"
+      "description": "Capacidad para consultar bases de datos Salesforce usando SOQL",
+      "tags": ["database", "salesforce"]
     },
     {
+      "id": "skill-routing",
       "name": "Case_Routing",
-      "description": "Capacidad para analizar y rutear casos de soporte"
+      "description": "Capacidad para analizar y rutear casos de soporte",
+      "tags": ["logic", "support"]
     }
   ],
   "endpoints": {
