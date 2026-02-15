@@ -1,26 +1,28 @@
 {
   "name": "CRM-Arena-L1-Agent",
   "version": "1.0.0",
-  "description": "Agente especializado en Salesforce CRM basado en el benchmark CRM Arena. Capaz de resolver ruteo de casos y consultas de conocimiento.",
-  "author": "TuNombreOSuario",
-  "capabilities": [
-    "SOQL_Querying",
-    "CRM_Data_Analysis",
-    "Case_Routing"
+  "description": "Agente especializado en Salesforce CRM basado en el benchmark CRM Arena.",
+  "author": "maeuza",
+  "url": "http://green-agent:8000",
+  "capabilities": {
+    "can_receive_messages": true,
+    "can_send_messages": true
+  },
+  "defaultInputModes": ["text"],
+  "defaultOutputModes": ["text"],
+  "skills": [
+    {
+      "name": "SOQL_Querying",
+      "description": "Capacidad para consultar bases de datos Salesforce usando SOQL"
+    },
+    {
+      "name": "Case_Routing",
+      "description": "Capacidad para analizar y rutear casos de soporte"
+    }
   ],
   "endpoints": {
     "a2a": "/a2a-delivery"
   },
-  "tools": [
-    {
-      "name": "issue_soql_query",
-      "description": "Ejecuta consultas SOQL en una base de datos SQLite local que simula Salesforce."
-    },
-    {
-      "name": "calculate_average_handle_time",
-      "description": "Calcula métricas de rendimiento de casos para análisis de gestión."
-    }
-  ],
   "metadata": {
     "benchmark": "CRMArena",
     "level": "L1",
