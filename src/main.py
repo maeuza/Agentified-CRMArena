@@ -1,66 +1,63 @@
 import os
 import uvicorn
-from fastapi.responses import FileResponse
+from starlette.applications import Starlette
+from starlette.responses import JSONResponse
+from executor import Executor
 
-# --- BLOQUE DE IMPORTACIÓN ROBUSTA ---
-try:
-    # Intento 1: Ruta estándar del SDK actualizado
-    from a2a import AgentServer
-except ImportError:
+# Mock Universal: Absorbe todas las llamadas del SDK de A2A
+class SimpleMock:
+    def __init__(self, text):
+        self.message = text
+        self.content = text
+        self.task_id = "task-123"
+        self.agent_role = "purple"
+        self.current_task = self 
+        self.state = "RUNNING"
+        self.id = "msg-123"
+
+    # Métodos de notificación que el Executor necesita
+    async def enqueue_event(self, *args, **kwargs):
+        pass # Simplemente ignora el evento de progreso
+    
+    async def send_message(self, *args, **kwargs):
+        pass
+
+    async def start_work(self): pass
+    async def complete(self): pass
+    async def failed(self, err): pass
+
+app = Starlette()
+executor_instance = Executor()
+
+@app.route("/a2a-delivery", methods=["POST"])
+async def delivery(request):
     try:
-        # Intento 2: Ruta interna en versiones específicas
-        from a2a.server.app import AgentServer
-    except ImportError:
-        try:
-            # Intento 3: Ruta alternativa de servidor
-            from a2a.server import AgentServer
-        except ImportError as e:
-            print("❌ Error crítico: No se pudo encontrar AgentServer en la librería a2a.")
-            print("Asegúrate de que 'a2a-sdk' esté correctamente instalado.")
-            raise e
-# -------------------------------------
-
-from agent import Agent          
-from participant import Participant
-
-def main():
-    """
-    Entry point for the AgentBeats platform. 
-    Determines if the instance should act as a Judge (Green) or a Worker (Purple).
-    """
-    # El rol se define por variable de entorno (green o purple)
-    role = os.getenv("AGENT_ROLE", "purple").lower()
-    
-    print(f"--- Starting CRMArena Node ---")
-    print(f"Active Role: {role.upper()}")
-
-    # Inicializamos la lógica según el rol
-    if role == "green":
-        # El Juez (Carga dataset y evalúa)
-        agent_instance = Agent()
-    else:
-        # El Participante (Usa Gemini y herramientas SQL)
-        agent_instance = Participant()
-
-    # Creamos el servidor compatible con el protocolo A2A
-    server = AgentServer(agent_instance)
-
-    # --- ENDPOINT PARA EL LEADERBOARD ---
-    # Sirve el archivo de metadatos requerido para el benchmark
-    @server.app.get("/agent-card.json")
-    async def get_agent_card():
-        # El archivo debe estar en la raíz del contenedor (/app/agent-card.json)
-        return FileResponse("agent-card.json")
-    # ------------------------------------
-    
-    print(f"Deployment Status: Online on port 8000")
-    
-    uvicorn.run(
-        server.app, 
-        host="0.0.0.0", 
-        port=8000, 
-        log_level="info"
-    )
+        data = await request.json()
+        params = data.get("params", {})
+        # Extraemos la tarea del JSON-RPC
+        task_text = params.get("task", "Listar casos")
+        req_id = data.get("id")
+        
+        print(f"🤖 Procesando tarea en CRM-Arena: {task_text}")
+        
+        mock_obj = SimpleMock(task_text)
+        
+        # Ejecutamos el flujo completo
+        result = await executor_instance.execute(mock_obj, mock_obj)
+        
+        # Devolvemos la respuesta en formato JSON-RPC 2.0
+        return JSONResponse({
+            "jsonrpc": "2.0",
+            "result": str(result),
+            "id": req_id
+        })
+    except Exception as e:
+        print(f"❌ Error crítico: {e}")
+        return JSONResponse({
+            "jsonrpc": "2.0", 
+            "error": {"code": -32603, "message": str(e)}, 
+            "id": req_id
+        }, status_code=200) # Devolvemos 200 para que PowerShell no lance excepción roja
 
 if __name__ == "__main__":
-    main()
+    uvicorn.run(app, host="0.0.0.0", port=8000)
