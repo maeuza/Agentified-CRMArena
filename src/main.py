@@ -1,7 +1,8 @@
 import os
 import uvicorn
+import json
 from starlette.applications import Starlette
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, FileResponse
 from executor import Executor
 
 # Mock Universal: Absorbe todas las llamadas del SDK de A2A
@@ -29,6 +30,27 @@ class SimpleMock:
 app = Starlette()
 executor_instance = Executor()
 
+# --- NUEVAS RUTAS PARA SERVIR EL AGENT-CARD Y EVITAR EL 404 ---
+@app.route("/agent-card.json", methods=["GET"])
+async def get_agent_card(request):
+    """Sirve el archivo de identidad del agente."""
+    file_path = "agent-card.json"
+    if os.path.exists(file_path):
+        return FileResponse(file_path)
+    else:
+        # Fallback por si el archivo no está en la raíz del contenedor
+        return JSONResponse({
+            "name": "CRM-Arena-L1-Agent",
+            "version": "1.0.0",
+            "endpoints": {"a2a": "/a2a-delivery"}
+        }, status_code=200)
+
+@app.route("/.well-known/agent-card.json", methods=["GET"])
+async def get_well_known_card(request):
+    """Ruta estándar adicional que suelen buscar los evaluadores."""
+    return await get_agent_card(request)
+# -----------------------------------------------------------
+
 @app.route("/a2a-delivery", methods=["POST"])
 async def delivery(request):
     try:
@@ -53,11 +75,14 @@ async def delivery(request):
         })
     except Exception as e:
         print(f"❌ Error crítico: {e}")
+        # Definimos req_id por si falla antes de extraerlo
+        error_id = data.get("id") if 'data' in locals() else None
         return JSONResponse({
             "jsonrpc": "2.0", 
             "error": {"code": -32603, "message": str(e)}, 
-            "id": req_id
-        }, status_code=200) # Devolvemos 200 para que PowerShell no lance excepción roja
+            "id": error_id
+        }, status_code=200)
 
 if __name__ == "__main__":
+    # Asegúrate de que el host sea 0.0.0.0 para Docker
     uvicorn.run(app, host="0.0.0.0", port=8000)
